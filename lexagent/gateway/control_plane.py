@@ -133,17 +133,26 @@ async def send_message(
             "firm_id": auth["firm_id"],
         }
     }
+
+    # WHY: Check the checkpoint first. If this matter already has state, only
+    # pass the new message — don't reset intake_complete or citations_verified.
+    # LangGraph merges the passed dict with the checkpoint; passing False would
+    # override a True checkpoint value and restart intake on every resumed call.
+    snapshot = await graph.aget_state(langgraph_cfg)
+    is_new = not snapshot or not snapshot.values
+
     state: LexState = {
         "user_input": body.text,
         "matter_id": matter_id,
         "messages": [HumanMessage(content=body.text)],
-        "intake_complete": False,
-        "citations_verified": False,
-        "draft_output": None,
-        "plain_english_summary": None,
         "firm_id": auth["firm_id"],
         "user_id": auth["user_id"],
     }
+    if is_new:
+        state["intake_complete"] = False
+        state["citations_verified"] = False
+        state["draft_output"] = None
+        state["plain_english_summary"] = None
 
     try:
         final = await graph.ainvoke(state, config=langgraph_cfg)
@@ -234,7 +243,12 @@ async def upload_document(
 # ---------------------------------------------------------------------------
 
 @app.websocket("/ws/{user_id}/{matter_id}")
-async def ws_endpoint(websocket: WebSocket, user_id: str, matter_id: str) -> None:
+async def ws_endpoint(
+    websocket: WebSocket,
+    user_id: str,
+    matter_id: str,
+    token: Optional[str] = None,
+) -> None:
     """
     WebSocket endpoint for real-time token streaming to the web UI.
 
@@ -247,9 +261,18 @@ async def ws_endpoint(websocket: WebSocket, user_id: str, matter_id: str) -> Non
 
     WHY WebSocket over SSE: bidirectional — client can send clarifying answers
     mid-stream, matching the multi-turn intake flow.
+    WHY token as query param: WebSocket handshake cannot carry Authorization
+    headers from browser JS, so the secret travels as ?token=... over TLS.
     """
-    await websocket.accept()
     cfg = LexConfig()
+
+    # Auth: mirror _verify_token logic. Reject before accept() to avoid
+    # upgrading the connection for unauthorised callers.
+    if cfg.api_secret_key and token != cfg.api_secret_key:
+        await websocket.close(code=4403)
+        return
+
+    await websocket.accept()
     graph = get_graph(cfg)
 
     langgraph_cfg = {
@@ -265,17 +288,23 @@ async def ws_endpoint(websocket: WebSocket, user_id: str, matter_id: str) -> Non
         payload = json.loads(raw)
         user_text = payload.get("text", "")
 
+        # WHY: Same checkpoint-first pattern as send_message — only reset
+        # intake_complete/citations_verified for genuinely new matters.
+        snapshot = await graph.aget_state(langgraph_cfg)
+        is_new = not snapshot or not snapshot.values
+
         state: LexState = {
             "user_input": user_text,
             "matter_id": matter_id,
             "messages": [HumanMessage(content=user_text)],
-            "intake_complete": False,
-            "citations_verified": False,
-            "draft_output": None,
-            "plain_english_summary": None,
             "firm_id": cfg.default_firm_id,
             "user_id": user_id,
         }
+        if is_new:
+            state["intake_complete"] = False
+            state["citations_verified"] = False
+            state["draft_output"] = None
+            state["plain_english_summary"] = None
 
         # LANGGRAPH: astream_events yields node-level events including token deltas.
         # "v2" event schema gives us both node transitions and LLM token streaming.
