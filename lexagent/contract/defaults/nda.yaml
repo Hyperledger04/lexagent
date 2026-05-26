@@ -1,0 +1,21 @@
+id: nda
+name: NDA — Standard Positions
+contract_type: nda
+positions:
+  - clause: Confidentiality period
+    our_position: 3 years from disclosure date (not execution date)
+    rationale: Execution date can precede actual disclosure by months; tying to disclosure is more accurate
+  - clause: Definition of Confidential Information
+    our_position: Broad definition including oral disclosures reduced to writing within 14 days
+    rationale: Prevents "I only said it verbally" defence
+  - clause: Governing law
+    our_position: Indian law, Delhi courts
+    rationale: Avoid foreign enforcement complications; Delhi courts have fastest injunction turnaround
+  - clause: Exclusions carve-out
+    our_position: Standard four carve-outs only (public domain, prior knowledge, independent development, disclosure required by law)
+    rationale: Reject requests to add "disclosed by a third party" without written consent requirement
+  - clause: Injunctive relief
+    our_position: Parties acknowledge monetary damages insufficient; injunctive relief without bond
+    rationale: Pre-empts argument against interim relief application; courts give weight to contractual acknowledgement
+notes: "Mutual vs one-way NDA: default to one-way (Disclosing Party → Receiving Party). Push back on mutual if information flow is asymmetric."
+created: "2024-01-01"

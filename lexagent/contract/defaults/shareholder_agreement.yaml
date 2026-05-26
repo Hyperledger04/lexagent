@@ -1,0 +1,24 @@
+id: shareholder_agreement
+name: Shareholder Agreement — Standard Positions
+contract_type: shareholder_agreement
+positions:
+  - clause: Non-compete duration
+    our_position: Maximum 12 months post-termination
+    rationale: Courts routinely enforce 12-month restraints; longer periods face unenforceability risk under S.27 Contract Act
+  - clause: Arbitration seat
+    our_position: New Delhi, DIAC Rules
+    rationale: Delhi seat gives access to Delhi HC for interim relief; DIAC faster than LCIA for Indian disputes
+  - clause: Drag-along threshold
+    our_position: Requires 75% majority (not simple majority)
+    rationale: Protects minority investors; standard Series B+ market practice
+  - clause: Information rights
+    our_position: Quarterly financials + annual audit; board observer right for >10% holders
+    rationale: SEBI AIF norms require this for fund investors
+  - clause: Liquidation preference
+    our_position: 1x non-participating preferred
+    rationale: Participating preferred is market-disfavoured; non-participating aligns incentives
+  - clause: ROFR / ROFO
+    our_position: ROFR on secondary transfers; 30-day exercise window
+    rationale: Standard India VC market practice post-2020
+notes: "Review against SEBI FEMA compliance if foreign investor involved. Check RBI ODI/FDI reporting timelines."
+created: "2024-01-01"
